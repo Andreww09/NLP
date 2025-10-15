@@ -107,7 +107,7 @@ def decode_xlnet(text_sentence, tokenizer, pred, prompt_length):
     print(resulting_string)
 
 
-def get_all_predictions(text_sentence, model_name, top_clean=5):
+def get_all_predictions(text_sentence, model_name, top_clean=5, n=2):
     if model_name.lower() == "bert":
         # ========================= BERT =================================
         input_ids, mask_idx = encode_bert(bert_tokenizer, text_sentence)
@@ -127,9 +127,13 @@ def get_all_predictions(text_sentence, model_name, top_clean=5):
 
     elif model_name.lower() == "gpt":
         # ========================= GPT =================================
-        input_ids = encode_gpt(gpt_tokenizer, text_sentence)
-        gpt = decode_gpt(gpt_tokenizer, gpt_model, input_ids, top_k=top_clean+1, top_p=1.0)
-        return {'gpt': gpt}
+        result = []
+        for i in range(n):
+            input_ids = encode_gpt(gpt_tokenizer, text_sentence)
+            new_sentence = decode_gpt(gpt_tokenizer, gpt_model, input_ids, top_k=top_clean + 1, top_p=1.0)
+            text_sentence = new_sentence
+            print(new_sentence + '\n')
+        return text_sentence
 
     else:
         # ========================= XLNet =================================
@@ -147,15 +151,15 @@ def get_prediction_end_of_sentence(input_text, model_name):
     try:
         if model_name.lower() == "bert":
             input_text += ' <mask>'
-            print(input_text)
+            # print(input_text)
             res = get_all_predictions(input_text, model_name, top_clean=int(no_words_to_be_predicted))
             return res
         elif model_name.lower() == "gpt":
-            print(input_text)
+            # print(input_text)
             res = get_all_predictions(input_text, model_name, top_clean=int(no_words_to_be_predicted))
             return res
         else:
-            print(input_text)
+            # print(input_text)
             res = get_all_predictions(input_text, model_name, top_clean=int(no_words_to_be_predicted))
             return res
 
@@ -168,39 +172,41 @@ try:
     # text = input("Enter a four word sentence: ")
     # if len(text.split()) < 4:
     #     raise Exception("Wrong number of words")
-    text = 'he is drinking his'
+    text = 'he is walking his'
     no_words_to_be_predicted, select_model, enter_input_text = set_model_config(no_words_to_be_predicted=2,
-                                                                                select_model="bert",
+                                                                                select_model="gpt",
                                                                                 enter_input_text=text)
     if select_model.lower() == "bert":
         bert_tokenizer, bert_model = load_model(select_model)
         res = get_prediction_end_of_sentence(enter_input_text, select_model)
-        print("result is: {}".format(res))
+        # print("result is: {}".format(res))
         answer_bert = []
-        print(res['bert'].split("\n"))
+        # print(res['bert'].split("\n"))
         for i in res['bert'].split("\n"):
             answer_bert.append(i)
             answer_as_string_bert = "    ".join(answer_bert)
-            print("output answer is: {}".format(answer_as_string_bert))
+            # print("output answer is: {}".format(answer_as_string_bert))
             # print(f"Predicted List is Here: {answer_as_string_bert}")
 
     elif select_model.lower() == "gpt":
         gpt_tokenizer, gpt_model = load_model(select_model)
         res = get_prediction_end_of_sentence(enter_input_text, select_model)
-        print("result is: {}".format(res))
+        # print("result is: {}".format(res))
         answer_gpt = list()
-        print(res['gpt'].split("\t"))
+        # print(res['gpt'].split("\t"))
         for i in res['gpt'].split("\t"):
             answer_gpt.append(i)
             answer_as_string_gpt = "    ".join(answer_gpt)
-            print("output answer is: {}".format(answer_as_string_gpt))
+            # print("output answer is: {}".format(answer_as_string_gpt))
             # print(f"Predicted List is Here: {answer_as_string_gpt}")
 
     else:
         xlnet_tokenizer, xlnet_model = load_model(select_model)
         res = get_prediction_end_of_sentence(enter_input_text, select_model)
-        print("result is: {}".format(res))
+        # print("result is: {}".format(res))
 
 
 except Exception as e:
     print(f'Some problem occured: {e}')
+
+    # {'gpt': 'he is drinking his last'}
